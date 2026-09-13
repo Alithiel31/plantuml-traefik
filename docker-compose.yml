@@ -1,0 +1,17 @@
+services:
+  plantuml:
+    image: plantuml/plantuml-server:${PLANTUML_IMAGE_TAG:-jetty}
+    container_name: plantuml
+    restart: unless-stopped
+    networks:
+      - traefik-net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.plantuml.rule=Host(`${PLANTUML_HOST}`)"
+      - "traefik.http.routers.plantuml.entrypoints=${TRAEFIK_ENTRYPOINT:-web}"
+      - "traefik.http.services.plantuml.loadbalancer.server.port=${PLANTUML_INTERNAL_PORT:-8080}"
+
+networks:
+  traefik-net:
+    external: true
+    name: ${TRAEFIK_NETWORK:-traefik-net}
