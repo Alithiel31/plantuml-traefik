@@ -2,11 +2,58 @@
 
 [English version](README.md)
 
+[![Lint Markdown](https://github.com/Alithiel31/plantuml-traefik/actions/workflows/lint-markdown.yml/badge.svg?branch=main)](https://github.com/Alithiel31/plantuml-traefik/actions/workflows/lint-markdown.yml) [![License: MIT](https://img.shields.io/github/license/Alithiel31/plantuml-traefik)](LICENSE) ![Raspberry Pi 5](https://img.shields.io/badge/Raspberry%20Pi-5-C51A4A?logo=raspberrypi&logoColor=white) ![Docker Compose](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white) [![PlantUML](https://img.shields.io/badge/PlantUML-server-2C7BB6?logo=plantuml&logoColor=white)](https://plantuml.com/)
+
 Serveur [PlantUML](https://plantuml.com/) auto-hébergé, utilisé pour générer des diagrammes UML à partir de texte (architecture, séquence, etc.).
 
 ## Vue d'ensemble
 
 Conçu pour un homelab Docker avec [Traefik](https://github.com/Alithiel31/traefik-homelab) en reverse proxy. Service strictement interne, jamais exposé publiquement — pas de route publique, pas de port publié sur l'hôte.
+
+## Architecture du homelab
+
+Place de ce projet dans le homelab (en surbrillance) :
+
+```mermaid
+flowchart LR
+    client(["Client<br/>(Tailscale VPN)"])
+    internet(["Internet"])
+    cf["Cloudflare Tunnel<br/>(optional, public services)"]
+    subgraph pi ["Raspberry Pi 5 — Docker"]
+        traefik["Traefik :8000"]
+        subgraph ci ["ci-net"]
+            gitea["Gitea"]
+            wps["Woodpecker Server"]
+            wpa["Woodpecker Agent"]
+        end
+        plantuml["PlantUML"]
+        subgraph vault ["Infisical stack"]
+            infisical["Infisical :8090"]
+            redis[("Redis")]
+            mailpit["Mailpit"]
+        end
+    end
+    pg[("PostgreSQL<br/>native, shared")]
+
+    client -->|"hosts file"| traefik
+    internet -.-> cf -.-> traefik
+    traefik --> gitea & wps & plantuml
+    gitea <-->|OAuth2| wps
+    wps -->|"gRPC :9000"| wpa
+    gitea & wps & infisical --> pg
+    infisical --> redis & mailpit
+    client -->|"Tailscale"| infisical
+    infisical -.->|"secrets at deploy time"| ci
+
+    classDef current fill:#fff3b0,stroke:#d97706,stroke-width:3px,color:#000
+    class plantuml current
+```
+
+## Choix de conception
+
+- Service sans état et sans secret : tout ce qui varie vit dans `.env`, ce qui rend le dépôt réutilisable tel quel.
+- Aucun port publié : le seul accès passe par Traefik, sur le réseau privé.
+- Tag d'image, réseau Traefik, entrypoint et nom d'hôte sont des paramètres, donc compatible avec n'importe quelle installation Traefik.
 
 ## Prérequis
 

@@ -2,11 +2,58 @@
 
 [Version française](README.fr.md)
 
+[![Lint Markdown](https://github.com/Alithiel31/plantuml-traefik/actions/workflows/lint-markdown.yml/badge.svg?branch=main)](https://github.com/Alithiel31/plantuml-traefik/actions/workflows/lint-markdown.yml) [![License: MIT](https://img.shields.io/github/license/Alithiel31/plantuml-traefik)](LICENSE) ![Raspberry Pi 5](https://img.shields.io/badge/Raspberry%20Pi-5-C51A4A?logo=raspberrypi&logoColor=white) ![Docker Compose](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white) [![PlantUML](https://img.shields.io/badge/PlantUML-server-2C7BB6?logo=plantuml&logoColor=white)](https://plantuml.com/)
+
 Self-hosted [PlantUML](https://plantuml.com/) server, used to generate UML diagrams from text (architecture, sequence, etc.).
 
 ## Overview
 
 Designed for a Docker homelab with [Traefik](https://github.com/Alithiel31/traefik-homelab) as reverse proxy. Strictly internal service, never exposed publicly — no public route, no port published on the host.
+
+## Homelab architecture
+
+Where this project sits in the homelab (highlighted):
+
+```mermaid
+flowchart LR
+    client(["Client<br/>(Tailscale VPN)"])
+    internet(["Internet"])
+    cf["Cloudflare Tunnel<br/>(optional, public services)"]
+    subgraph pi ["Raspberry Pi 5 — Docker"]
+        traefik["Traefik :8000"]
+        subgraph ci ["ci-net"]
+            gitea["Gitea"]
+            wps["Woodpecker Server"]
+            wpa["Woodpecker Agent"]
+        end
+        plantuml["PlantUML"]
+        subgraph vault ["Infisical stack"]
+            infisical["Infisical :8090"]
+            redis[("Redis")]
+            mailpit["Mailpit"]
+        end
+    end
+    pg[("PostgreSQL<br/>native, shared")]
+
+    client -->|"hosts file"| traefik
+    internet -.-> cf -.-> traefik
+    traefik --> gitea & wps & plantuml
+    gitea <-->|OAuth2| wps
+    wps -->|"gRPC :9000"| wpa
+    gitea & wps & infisical --> pg
+    infisical --> redis & mailpit
+    client -->|"Tailscale"| infisical
+    infisical -.->|"secrets at deploy time"| ci
+
+    classDef current fill:#fff3b0,stroke:#d97706,stroke-width:3px,color:#000
+    class plantuml current
+```
+
+## Design choices
+
+- Stateless service with no secrets: everything variable lives in `.env`, which makes the repository reusable as-is.
+- No published port: the only way in is through Traefik, over the private network.
+- Image tag, Traefik network, entrypoint and hostname are all parameters, so it fits any Traefik setup.
 
 ## Prerequisites
 
