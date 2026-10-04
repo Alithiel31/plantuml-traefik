@@ -28,7 +28,7 @@ Le conteneur ne publie aucun port. Il rejoint un réseau Docker externe déjà c
 
 Ce nom d'hôte n'existe que sur le réseau local : il doit être ajouté manuellement dans le fichier `hosts` de chaque machine cliente, pointant vers l'adresse du serveur, par exemple :
 
-```
+```text
 <adresse-du-serveur>  <valeur-de-PLANTUML_HOST>
 ```
 

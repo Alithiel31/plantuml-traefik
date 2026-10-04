@@ -28,7 +28,7 @@ The container doesn't publish any port. It joins an external Docker network alre
 
 This hostname only exists on the local network: it must be added manually to the `hosts` file of every client machine, pointing to the server's address, e.g.:
 
-```
+```text
 <server-address>  <PLANTUML_HOST-value>
 ```
 
