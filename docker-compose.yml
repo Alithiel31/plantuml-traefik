@@ -6,6 +6,7 @@ services:
     networks:
       - traefik-net
     labels:
+      - "homelab.tier=infra"
       - "traefik.enable=true"
       - "traefik.http.routers.plantuml.rule=Host(`${PLANTUML_HOST}`)"
       - "traefik.http.routers.plantuml.entrypoints=${TRAEFIK_ENTRYPOINT:-web}"
