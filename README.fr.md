@@ -27,10 +27,10 @@ flowchart LR
             wpa["Woodpecker Agent"]
         end
         plantuml["PlantUML"]
+        mailpit["Mailpit<br/>SMTP :1025 · UI :8025"]
         subgraph vault ["Infisical stack"]
             infisical["Infisical :8090"]
             redis[("Redis")]
-            mailpit["Mailpit"]
         end
     end
     pg[("PostgreSQL<br/>native, shared")]
@@ -41,7 +41,8 @@ flowchart LR
     gitea <-->|OAuth2| wps
     wps -->|"gRPC :9000"| wpa
     gitea & wps & infisical --> pg
-    infisical --> redis & mailpit
+    infisical --> redis
+    infisical & gitea --> mailpit
     client -->|"Tailscale"| infisical
     infisical -.->|"secrets at deploy time"| ci
 
